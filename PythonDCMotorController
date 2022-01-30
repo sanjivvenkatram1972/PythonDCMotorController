@@ -1,0 +1,59 @@
+import time
+import RPi.GPIO as GPIO
+
+in1 = 24
+in2 = 23
+en = 25
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(in1,GPIO.OUT)
+GPIO.setup(in2,GPIO.OUT)
+GPIO.setup(en,GPIO.OUT)
+
+#Set PWM frequency here
+p = GPIO.PWM(en,50)
+p.start(0)
+
+from shareplum import Site    
+from shareplum import Office365    
+from shareplum.site import Version    
+sharepointUsername = "xyz@prudentia-consulting.com"    
+sharepointPassword = "YourPassword!"    
+sharepointSite = "https://prudentia.sharepoint.com/sites/PowerPlatformView"    
+website = "https://prudentia.sharepoint.com/"    
+authcookie = Office365(website, username=sharepointUsername,    
+password=sharepointPassword).GetCookies()    
+site = Site(sharepointSite, version=Version.v2016, authcookie=authcookie)
+
+while True:
+    
+    set_list = site.List('StepperList')
+    speed = set_list.GetListItems(fields=['Steps'])
+    speed = int(str(speed)[11:-4])
+    print(speed)
+    Dir = set_list.GetListItems(fields=['Dir'])
+    Dir = int(str(Dir)[9:-4])
+    print(Dir)
+    
+    #print (speed)
+    if speed != 0 and Dir == 1:
+        
+        GPIO.output(in1,GPIO.HIGH)
+        GPIO.output(in2,GPIO.LOW)
+        p.ChangeDutyCycle(speed)
+      
+    if speed !=0 and Dir == 2:
+        
+        GPIO.output(in1,GPIO.LOW)
+        GPIO.output(in2,GPIO.HIGH)
+        p.ChangeDutyCycle(speed)
+        
+    time.sleep(0)
+    
+    if speed == 0:
+        #print(speed)
+        pwm.stop()
+        GPIO.cleanup()
+        break
+
+print ("stopped executing code") 
