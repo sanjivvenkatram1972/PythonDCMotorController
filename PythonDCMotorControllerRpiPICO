@@ -1,0 +1,59 @@
+import sys
+import time
+
+from telemetrix_rpi_pico import telemetrix_rpi_pico
+
+# Note the pins below are to the right of the Pi looking from top, these are GP18,19 & 17
+in1 = 18
+in2 = 19
+en = 17
+
+board = telemetrix_rpi_pico.TelemetrixRpiPico()
+
+board.set_pin_mode_digital_output(in1)
+board.set_pin_mode_digital_output(in2)
+#note PWM values go from 0 to 19,999 *slider should start at 1700)
+board.set_pin_mode_pwm_output(en)
+
+from shareplum import Site    
+from shareplum import Office365    
+from shareplum.site import Version    
+sharepointUsername = "sanjiv@prudentia-consulting.com"    
+sharepointPassword = "Arift2020!"    
+sharepointSite = "https://prudentia.sharepoint.com/sites/PowerPlatformView"    
+website = "https://prudentia.sharepoint.com/"    
+authcookie = Office365(website, username=sharepointUsername,    
+password=sharepointPassword).GetCookies()    
+site = Site(sharepointSite, version=Version.v2016, authcookie=authcookie)
+
+while True:
+
+    set_list = site.List('StepperList')
+    speed = set_list.GetListItems(fields=['Steps'])
+    speed = int(str(speed)[11:-4])
+    print(speed)
+
+    Dir = set_list.GetListItems(fields=['Dir'])
+    Dir = int(str(Dir)[9:-4])
+    print(Dir)
+
+    if speed != 0 and Dir == 1:
+        
+        board.digital_write(in1,1)
+        board.digital_write(in2,0)
+        board.pwm_write(en,speed,raw=True)
+
+
+    if speed != 1 and Dir == 2:
+        
+        board.digital_write(in1,0)
+        board.digital_write(in2,1)
+        board.pwm_write(en,speed,raw=True)
+
+
+    if speed == 0:
+        board.shutdown()
+        exit(0)
+
+
+print ("stopped executing code") 
